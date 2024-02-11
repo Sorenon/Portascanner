@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity">
+
+    <ImageView
+        android:id="@+id/brand_img"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintDimensionRatio=""
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/camera_preview"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/logo" />
+
+    <view
+        android:id="@+id/camera_preview"
+        class="androidx.camera.view.PreviewView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ViewAnimator
+        android:id="@+id/menu_animator"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="30dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="30dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/camera_preview"
+        app:layout_constraintTop_toBottomOf="@+id/brand_img">
+
+        <LinearLayout
+            android:id="@+id/start_menu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/new_scan_btn"
+                style="@style/brand_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/new_scan" />
+
+            <Button
+                android:id="@+id/view_scans_btn"
+                style="@style/brand_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/brand"
+                android:text="@string/view_scans" />
+
+            <Button
+                android:id="@+id/about_btn"
+                style="@style/brand_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:backgroundTint="@color/brand"
+                android:text="@string/about" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/scan_menu"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/stop_scan_btn"
+                style="@style/brand_button"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Stop Scanning" />
+        </LinearLayout>
+
+    </ViewAnimator>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="brand_button" parent="TextAppearance.AppCompat">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:backgroundTint">@color/brand</item>
+        <item name="android:fontFamily">@font/inter</item>
+        <item name="cornerRadius">0dp</item>
+        <item name="android:textSize">30sp</item>
+        <item name="android:paddingVertical">10dp</item>
+    </style>
+</resources>
