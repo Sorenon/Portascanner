@@ -22,7 +22,7 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintDimensionRatio="4:3"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -48,6 +48,7 @@
                 style="@style/brand_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:backgroundTint="@color/brand"
                 android:text="@string/new_scan" />
 
             <Button
@@ -78,9 +79,19 @@
                 style="@style/brand_button"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Stop Scanning" />
+                android:text="End Scan" />
         </LinearLayout>
 
     </ViewAnimator>
+
+    <view
+        android:id="@+id/results_view"
+        class="com.example.portascanner.objectdetection.ResultView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="4:3"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
