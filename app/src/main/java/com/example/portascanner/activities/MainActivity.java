@@ -1,13 +1,11 @@
-package com.example.portascanner;
+package com.example.portascanner.activities;
 
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
 import android.graphics.Point;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ViewAnimator;
@@ -24,7 +22,10 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
+import com.example.portascanner.R;
+import com.example.portascanner.ScanData;
 import com.example.portascanner.models.ObjectDetectionModel;
+import com.example.portascanner.models.TestModel;
 import com.example.portascanner.objectdetection.Result;
 import com.example.portascanner.objectdetection.ResultView;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -43,7 +44,7 @@ public class MainActivity extends AppCompatActivity {
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     public Preview preview;
     public ImageAnalysis imageAnalysis;
-    public static Bitmap firstImage;
+    public static ScanData scanData;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -86,19 +87,13 @@ public class MainActivity extends AppCompatActivity {
         this.setContentView(R.layout.main);
 
         // Init Preview
-        if (this.preview != null) {
-            PreviewView previewView = this.requireViewById(R.id.camera_preview);
-            previewView.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);
-            previewView.setScaleType(PreviewView.ScaleType.FIT_CENTER);
-            this.preview.setSurfaceProvider(previewView.getSurfaceProvider());
-        }
+        PreviewView previewView = this.requireViewById(R.id.camera_preview);
+        previewView.setScaleType(PreviewView.ScaleType.FIT_CENTER);
+        this.preview.setSurfaceProvider(previewView.getSurfaceProvider());
 
         // Initialise buttons
         this.requireViewById(R.id.new_scan_btn).setOnClickListener(v -> this.startScan());
-        this.requireViewById(R.id.view_scans_btn).setOnClickListener(v -> {
-            close();
-            this.startActivity(new Intent(this, ViewScansActivity.class));
-        });
+        this.requireViewById(R.id.view_scans_btn).setOnClickListener(v -> this.startActivity(new Intent(this, ViewScansActivity.class)));
         this.requireViewById(R.id.stop_scan_btn).setOnClickListener(v -> this.stopScan());
     }
 
@@ -109,11 +104,16 @@ public class MainActivity extends AppCompatActivity {
         this.<ViewAnimator>requireViewById(R.id.menu_animator).setDisplayedChild(1);
 
         this.imageAnalysis.setAnalyzer(Executors.newSingleThreadExecutor(), this::handleImage);
+        this.mediaPlayer = MediaPlayer.create(this, R.raw.alarm);
+        this.mediaPlayer.setLooping(true);
+        this.lastSeenTime = System.currentTimeMillis();
     }
 
     void stopScan() {
         this.imageAnalysis.clearAnalyzer();
-        if (firstImage == null) {
+        this.mediaPlayer.release();
+        this.mediaPlayer = null;
+        if (scanData == null) {
             return;
         }
         this.<ViewAnimator>requireViewById(R.id.menu_animator).setDisplayedChild(0);
@@ -122,36 +122,27 @@ public class MainActivity extends AppCompatActivity {
         resultView.setResults(new ArrayList<>(), new ArrayList<>());
         resultView.invalidate();
 
-        Paint mPaintRectangle = new Paint();
-        mPaintRectangle.setColor(Color.RED);
-        mPaintRectangle.setStrokeWidth(5);
-        mPaintRectangle.setStyle(Paint.Style.STROKE);
-
-        Canvas canvas = new Canvas(firstImage);
-        for (Point point : points) {
-            canvas.drawCircle(point.x, point.y, 10, mPaintRectangle);
-        }
-
-        this.points.clear();
-
-        close();
-
         this.startActivity(new Intent(this, SaveScanActivity.class));
     }
 
-    void close() {
-        this.preview.setSurfaceProvider(null);
+    @Override
+    protected void onResume() {
+        super.onResume();
+        ResultView resultView = this.findViewById(R.id.results_view);
+        if (resultView != null) {
+            resultView.setResults(new ArrayList<>(), new ArrayList<>());
+            resultView.invalidate();
+        }
     }
 
     private ObjectDetectionModel objectDetectionModel;
 
-    private final ArrayList<Point> points = new ArrayList<>();
-    public static float scaleX;
-    public static float scaleY;
+    private long lastSeenTime = 0;
+    private MediaPlayer mediaPlayer;
 
     void handleImage(@NonNull ImageProxy image) {
         if (this.objectDetectionModel == null) {
-            this.objectDetectionModel = new ObjectDetectionModel(this);
+            this.objectDetectionModel = new TestModel(this);
         }
 
         Bitmap bitmap = image.toBitmap();
@@ -162,23 +153,37 @@ public class MainActivity extends AppCompatActivity {
         Log.d("Scan", "End analysis with " + results.size() + " results");
 
         this.runOnUiThread(() -> {
-            for (Result result : results) {
-                points.add(new Point(result.rect.centerX(), result.rect.centerY()));
+            if (this.mediaPlayer == null) {
+                return;
             }
-
             ResultView resultView = this.findViewById(R.id.results_view);
 
-            if (firstImage == null) {
-                firstImage = bitmap;
+            if (scanData == null) {
+                scanData = new ScanData();
+                scanData.points = new ArrayList<>();
+                scanData.image = bitmap;
 
-                scaleX = (float) resultView.getHeight() / firstImage.getHeight();
-                scaleY = (float) resultView.getWidth() / firstImage.getWidth();
+                ResultView.scaleX = (float) resultView.getHeight() / bitmap.getHeight();
+                ResultView.scaleY = (float) resultView.getWidth() / bitmap.getWidth();
             } else {
                 bitmap.recycle();
             }
 
+            long currentTime = System.currentTimeMillis();;
+            if (results.isEmpty()) {
+                if (currentTime - lastSeenTime > 3000 && !mediaPlayer.isPlaying()) {
+                    mediaPlayer.start();
+                }
+            } else {
+                mediaPlayer.pause();
+                mediaPlayer.seekTo(0);
+                lastSeenTime = currentTime;
+                Result result = results.get(0);
+                scanData.points.add(new Point(result.rect.centerX(), result.rect.centerY()));
+            }
+
             if (resultView != null) {
-                resultView.setResults(results, points);
+                resultView.setResults(results, scanData.points);
                 resultView.invalidate();
             }
         });

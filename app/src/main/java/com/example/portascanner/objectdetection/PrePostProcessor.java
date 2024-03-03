@@ -24,7 +24,6 @@ public class PrePostProcessor {
 
     // model output is of size 25200*(num_of_class+5)
     private static int mOutputRow = 25200; // as decided by the YOLOv5 model for input image of size 640*640
-    private static int mOutputColumn = 85; // left, top, right, bottom, score and 80 class probability
     private static float mThreshold = 0.30f; // score above which a detection is generated
     private static int mNmsLimit = 15;
 
@@ -98,31 +97,35 @@ public class PrePostProcessor {
         return intersectionArea / (areaA + areaB - intersectionArea);
     }
 
-    public static ArrayList<Result> outputsToNMSPredictions(float[] outputs, float imgScaleX, float imgScaleY) {
+    public static ArrayList<Result> outputsToNMSPredictions(float[] outputs, float imgScaleX, float imgScaleY, int classes) {
         ArrayList<Result> results = new ArrayList<>();
+
+        // left, top, right, bottom, score and num_of_class * probability
+        int outputColumn = 5 + classes;
+
         for (int i = 0; i < mOutputRow; i++) {
-            if (outputs[i * mOutputColumn + 4] > mThreshold) {
-                float x = outputs[i * mOutputColumn];
-                float y = outputs[i * mOutputColumn + 1];
-                float w = outputs[i * mOutputColumn + 2];
-                float h = outputs[i * mOutputColumn + 3];
+            if (outputs[i * outputColumn + 4] > mThreshold) {
+                float x = outputs[i * outputColumn];
+                float y = outputs[i * outputColumn + 1];
+                float w = outputs[i * outputColumn + 2];
+                float h = outputs[i * outputColumn + 3];
 
                 float left = imgScaleX * (x - w / 2);
                 float top = imgScaleY * (y - h / 2);
                 float right = imgScaleX * (x + w / 2);
                 float bottom = imgScaleY * (y + h / 2);
 
-                float max = outputs[i * mOutputColumn + 5];
+                float max = outputs[i * outputColumn + 5];
                 int cls = 0;
-                for (int j = 0; j < mOutputColumn - 5; j++) {
-                    if (outputs[i * mOutputColumn + 5 + j] > max) {
-                        max = outputs[i * mOutputColumn + 5 + j];
+                for (int j = 0; j < outputColumn - 5; j++) {
+                    if (outputs[i * outputColumn + 5 + j] > max) {
+                        max = outputs[i * outputColumn + 5 + j];
                         cls = j;
                     }
                 }
 
                 Rect rect = new Rect((int) left, (int) top, (int) right, (int) bottom);
-                Result result = new Result(cls, outputs[i * mOutputColumn + 4], rect);
+                Result result = new Result(cls, outputs[i * outputColumn + 4], rect);
                 results.add(result);
             }
         }

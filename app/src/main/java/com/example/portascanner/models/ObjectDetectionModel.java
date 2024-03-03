@@ -2,7 +2,7 @@ package com.example.portascanner.models;
 
 import android.graphics.Bitmap;
 
-import com.example.portascanner.MainActivity;
+import com.example.portascanner.activities.MainActivity;
 import com.example.portascanner.objectdetection.PrePostProcessor;
 import com.example.portascanner.objectdetection.Result;
 
@@ -37,6 +37,6 @@ public class ObjectDetectionModel {
         float imgScaleX = (float) bitmap.getWidth() / PrePostProcessor.INPUT_WIDTH;
         float imgScaleY = (float) bitmap.getHeight() / PrePostProcessor.INPUT_HEIGHT;
 
-        return PrePostProcessor.outputsToNMSPredictions(outputs, imgScaleX, imgScaleY);
+        return PrePostProcessor.outputsToNMSPredictions(outputs, imgScaleX, imgScaleY, 1);
     }
 }

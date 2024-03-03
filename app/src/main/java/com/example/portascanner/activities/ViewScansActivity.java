@@ -1,7 +1,8 @@
-package com.example.portascanner;
+package com.example.portascanner.activities;
 
 import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.TypedValue;
@@ -14,6 +15,9 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.content.ContextCompat;
+
+import com.example.portascanner.R;
+import com.example.portascanner.Scan;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -32,8 +36,8 @@ import java.util.Objects;
 public class ViewScansActivity extends AppCompatActivity {
 
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    protected void onResume() {
+        super.onResume();
         List<String> scanFileNames = new ArrayList<>();
 
         this.setContentView(R.layout.view_scans);
@@ -51,9 +55,7 @@ public class ViewScansActivity extends AppCompatActivity {
         LinearLayout grid = this.requireViewById(R.id.grid);
         for (String name : scanFileNames) {
             try {
-                JSONObject jsonReader = new JSONObject(new String(Files.readAllBytes(new File(MainActivity.scansDir(this), name + ".json").toPath()), StandardCharsets.UTF_8));
-                String title = jsonReader.getString("title");
-                long timestamp = jsonReader.getLong("time");
+                Scan scan = Scan.load(name, MainActivity.scansDir(this));
 
                 CardView cardView = new CardView(this);
                 ViewGroup.MarginLayoutParams params1 = new LinearLayout.LayoutParams(
@@ -71,13 +73,13 @@ public class ViewScansActivity extends AppCompatActivity {
                         (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 150, this.getResources().getDisplayMetrics()),
                         (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 150, this.getResources().getDisplayMetrics())
                 ));
-                imageView.setImageURI(Uri.fromFile(new File(MainActivity.scansDir(this), name + ".jpeg")));
+                imageView.setImageBitmap(scan.scanData.image);
 
                 TextView titleView = new TextView(this);
-                titleView.setText(title);
+                titleView.setText(scan.title);
 
                 TextView timestampView = new TextView(this);
-                timestampView.setText(LocalDateTime.ofEpochSecond(timestamp, 0, ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+                timestampView.setText(LocalDateTime.ofEpochSecond(scan.unixTimestamp, 0, ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
                 timestampView.setTextColor(ContextCompat.getColor(this.getBaseContext(), R.color.grey));
 
                 cardView.addView(layout);
@@ -85,6 +87,11 @@ public class ViewScansActivity extends AppCompatActivity {
                 layout.addView(titleView);
                 layout.addView(timestampView);
 
+                cardView.setOnClickListener(v -> {
+                    Intent intent = new Intent(this, ViewScanActivity.class);
+                    intent.putExtra("com.example.portascanner.scan_name", name);
+                    this.startActivity(intent);
+                });
 
                 grid.addView(cardView);
 

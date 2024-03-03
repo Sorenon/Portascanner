@@ -16,16 +16,17 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import com.example.portascanner.MainActivity;
-
 import java.util.ArrayList;
+import java.util.List;
 
 
 public class ResultView extends View {
-
     private Paint mPaintRectangle;
-    private ArrayList<Result> mResults;
-    private ArrayList<Point> mpoints;
+    private ArrayList<Result> results;
+    private List<Point> points;
+
+    public static float scaleX;
+    public static float scaleY;
 
     public ResultView(Context context) {
         super(context);
@@ -41,29 +42,29 @@ public class ResultView extends View {
     protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
 
-        if (mResults == null) return;
+        if (results == null) return;
 
-        for (Result result : mResults) {
+        for (Result result : results) {
             mPaintRectangle.setStrokeWidth(5);
             mPaintRectangle.setStyle(Paint.Style.STROKE);
             canvas.drawRect(result.rect, mPaintRectangle);
         }
 
-        for (Point point : mpoints) {
-            canvas.drawCircle(point.x * MainActivity.scaleX, point.y * MainActivity.scaleY, 10, mPaintRectangle);
+        for (Point point : points) {
+            canvas.drawCircle(point.x * this.scaleX, point.y * this.scaleY, 10, mPaintRectangle);
         }
     }
 
-    public void setResults(ArrayList<Result> results, ArrayList<Point> points) {
-        mResults = results;
+    public void setResults(ArrayList<Result> results, List<Point> points) {
+        this.results = results;
         for (Result result : results) {
-            result.rect.top *= MainActivity.scaleY;
-            result.rect.bottom *= MainActivity.scaleY;
+            result.rect.top *= this.scaleY;
+            result.rect.bottom *= this.scaleY;
 
-            result.rect.left *= MainActivity.scaleX;
-            result.rect.right *= MainActivity.scaleX;
+            result.rect.left *= this.scaleX;
+            result.rect.right *= this.scaleX;
         }
 
-        mpoints = points;
+        this.points = points;
     }
 }
