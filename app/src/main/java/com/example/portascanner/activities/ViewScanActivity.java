@@ -13,23 +13,20 @@ import android.util.Log;
 import android.widget.ImageView;
 
 import androidx.annotation.Nullable;
+import androidx.core.content.FileProvider;
 
 import com.example.portascanner.R;
-import com.example.portascanner.Scan;
+import com.example.portascanner.scans.Scan;
+import com.example.portascanner.scans.ScanRepository;
 
-import org.checkerframework.checker.units.qual.A;
-import org.json.JSONException;
-
-import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
 
 public class ViewScanActivity extends Activity {
-    // TODO, init, heatmap, export, delete, zoom
+    // TODO, heatmap, zoom
 
-    private Scan scan;
+    private static final ScanRepository SCAN_REPOSITORY = ScanRepository.INSTANCE;
     private Bitmap imgPreview;
 
     @Override
@@ -37,14 +34,9 @@ public class ViewScanActivity extends Activity {
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.scan_details);
 
-        File dir = MainActivity.scansDir(this);
         String scanName = this.getIntent().getStringExtra("com.example.portascanner.scan_name");
 
-        try {
-            this.scan = Scan.load(scanName, dir);
-        } catch (IOException | JSONException e) {
-            throw new RuntimeException(e);
-        }
+        Scan scan = SCAN_REPOSITORY.getScans().get(scanName);
 
         this.imgPreview = scan.scanData.image.copy(Bitmap.Config.RGB_565, true);
 
@@ -66,18 +58,48 @@ public class ViewScanActivity extends Activity {
 
         this.requireViewById(R.id.close_btn).setOnClickListener(v -> this.finish());
         this.requireViewById(R.id.delete_btn).setOnClickListener(v -> {
+            SCAN_REPOSITORY.delete(scanName);
             this.finish();
-
-            new File(dir, scanName + ".json").delete();
-            new File(dir, scanName + ".jpeg").delete();
         });
         this.requireViewById(R.id.export_btn).setOnClickListener(v -> {
             Intent shareIntent = new Intent();
             shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.putExtra(Intent.EXTRA_STREAM, Scan.saveImage(this, this.imgPreview));
+            shareIntent.putExtra(Intent.EXTRA_STREAM, saveImage(this.imgPreview));
             shareIntent.setType("image/jpg");
             shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(shareIntent, null));
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        this.imgPreview.recycle();
+    }
+
+    /**
+     * Saves the image as PNG to the app's cache directory.
+     *
+     * @param image Bitmap to save.
+     * @return Uri of the saved file or null
+     */
+    public Uri saveImage(Bitmap image) {
+        //TODO - Should be processed in another thread
+        File imagesFolder = new File(this.getCacheDir(), "shared_images");
+        Uri uri = null;
+        try {
+            imagesFolder.mkdirs();
+            File file = new File(imagesFolder, "shared_image.jpg");
+
+            FileOutputStream stream = new FileOutputStream(file);
+            image.compress(Bitmap.CompressFormat.PNG, 90, stream);
+            stream.flush();
+            stream.close();
+            uri = FileProvider.getUriForFile(this, "com.example.portascanner.fileprovider", file);
+
+        } catch (IOException e) {
+            Log.d("Scan IO", "IOException while trying to write file for sharing: " + e.getMessage());
+        }
+        return uri;
     }
 }

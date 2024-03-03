@@ -1,10 +1,8 @@
-package com.example.portascanner.models;
+package com.example.portascanner.objectdetection;
 
 import android.graphics.Bitmap;
 
 import com.example.portascanner.activities.MainActivity;
-import com.example.portascanner.objectdetection.PrePostProcessor;
-import com.example.portascanner.objectdetection.Result;
 
 import org.pytorch.IValue;
 import org.pytorch.Tensor;

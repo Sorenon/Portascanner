@@ -13,32 +13,31 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.portascanner.R;
-import com.example.portascanner.Scan;
-import com.example.portascanner.ScanData;
+import com.example.portascanner.scans.Scan;
+import com.example.portascanner.scans.ScanData;
+import com.example.portascanner.scans.ScanRepository;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 
 public class SaveScanActivity extends AppCompatActivity {
+    public static ScanData SCAN_TO_SAVE;
+
     private ScanData scanData;
     private Bitmap imgPreview;
     private long unixTimestamp;
-    private String timestamp;
     private EditText titleTxt;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (MainActivity.scanData == null) {
+        if (SCAN_TO_SAVE == null) {
             this.finish();
             return;
         }
 
-        this.scanData = MainActivity.scanData;
-        MainActivity.scanData = null;
+        this.scanData = SCAN_TO_SAVE;
+        SCAN_TO_SAVE = null;
         this.imgPreview = this.scanData.image.copy(Bitmap.Config.RGB_565, true);
 
         Paint mPaintRectangle = new Paint();
@@ -52,13 +51,12 @@ public class SaveScanActivity extends AppCompatActivity {
         }
 
         this.unixTimestamp = Instant.now().getEpochSecond();
-        this.timestamp = LocalDateTime.ofEpochSecond(this.unixTimestamp, 0, ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
 
         this.setContentView(R.layout.save_scan);
         ImageView imageView = this.requireViewById(R.id.scan_img);
         imageView.setImageBitmap(imgPreview);
         this.titleTxt = this.requireViewById(R.id.title_txt);
-        this.titleTxt.setHint(this.timestamp);
+        this.titleTxt.setHint(Scan.getFormattedTimestamp(this.unixTimestamp));
 
         // Initialise buttons
         this.requireViewById(R.id.save_scan_btn).setOnClickListener(v -> this.save());
@@ -67,8 +65,8 @@ public class SaveScanActivity extends AppCompatActivity {
 
     void save() {
         String title = this.titleTxt.getText().toString();
-        if (title.length() == 0) {
-            title = this.timestamp;
+        if (title.isEmpty()) {
+            title = this.titleTxt.getHint().toString();
         }
         String desc = this.<EditText>requireViewById(R.id.desc_txt).getText().toString();
 
@@ -78,7 +76,7 @@ public class SaveScanActivity extends AppCompatActivity {
         scan.unixTimestamp = unixTimestamp;
         scan.scanData = this.scanData;
 
-        scan.save(timestamp, MainActivity.scansDir(this));
+        ScanRepository.INSTANCE.save(scan);
 
         this.finish();
     }

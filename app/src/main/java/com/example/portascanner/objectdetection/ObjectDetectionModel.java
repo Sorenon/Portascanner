@@ -1,10 +1,8 @@
-package com.example.portascanner.models;
+package com.example.portascanner.objectdetection;
 
 import android.graphics.Bitmap;
 
 import com.example.portascanner.activities.MainActivity;
-import com.example.portascanner.objectdetection.PrePostProcessor;
-import com.example.portascanner.objectdetection.Result;
 
 import org.pytorch.IValue;
 import org.pytorch.LiteModuleLoader;
@@ -38,5 +36,9 @@ public class ObjectDetectionModel {
         float imgScaleY = (float) bitmap.getHeight() / PrePostProcessor.INPUT_HEIGHT;
 
         return PrePostProcessor.outputsToNMSPredictions(outputs, imgScaleX, imgScaleY, 1);
+    }
+
+    public void destroy() {
+        this.module.destroy();
     }
 }

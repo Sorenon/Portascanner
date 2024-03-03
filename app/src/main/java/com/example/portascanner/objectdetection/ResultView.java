@@ -16,17 +16,16 @@ import android.view.View;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
 public class ResultView extends View {
     private Paint mPaintRectangle;
-    private ArrayList<Result> results;
+    private List<Result> results;
     private List<Point> points;
 
-    public static float scaleX;
-    public static float scaleY;
+    public float scaleX;
+    public float scaleY;
 
     public ResultView(Context context) {
         super(context);
@@ -55,7 +54,7 @@ public class ResultView extends View {
         }
     }
 
-    public void setResults(ArrayList<Result> results, List<Point> points) {
+    public void setResults(List<Result> results, List<Point> points) {
         this.results = results;
         for (Result result : results) {
             result.rect.top *= this.scaleY;

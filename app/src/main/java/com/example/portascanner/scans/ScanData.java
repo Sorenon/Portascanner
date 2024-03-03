@@ -1,4 +1,4 @@
-package com.example.portascanner;
+package com.example.portascanner.scans;
 
 import android.graphics.Bitmap;
 import android.graphics.Point;
