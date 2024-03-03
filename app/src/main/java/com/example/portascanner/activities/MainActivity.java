@@ -2,6 +2,8 @@ package com.example.portascanner.activities;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Point;
@@ -95,6 +97,16 @@ public class MainActivity extends AppCompatActivity {
         this.requireViewById(R.id.new_scan_btn).setOnClickListener(v -> this.startScan());
         this.requireViewById(R.id.view_scans_btn).setOnClickListener(v -> this.startActivity(new Intent(this, ViewScansActivity.class)));
         this.requireViewById(R.id.stop_scan_btn).setOnClickListener(v -> this.stopScan());
+        this.requireViewById(R.id.about_btn).setOnClickListener(v -> {
+            if (this.objectDetectionModel == null) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Switch to test model")
+                        .setPositiveButton(android.R.string.yes, (dialog, which) -> MainActivity.this.objectDetectionModel = new TestModel(MainActivity.this))
+                        .setNegativeButton(android.R.string.no, null)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+            }
+        });
     }
 
     void startScan() {
@@ -142,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
 
     void handleImage(@NonNull ImageProxy image) {
         if (this.objectDetectionModel == null) {
-            this.objectDetectionModel = new TestModel(this);
+            this.objectDetectionModel = new ObjectDetectionModel(this);
         }
 
         Bitmap bitmap = image.toBitmap();
@@ -169,7 +181,8 @@ public class MainActivity extends AppCompatActivity {
                 bitmap.recycle();
             }
 
-            long currentTime = System.currentTimeMillis();;
+            long currentTime = System.currentTimeMillis();
+            ;
             if (results.isEmpty()) {
                 if (currentTime - lastSeenTime > 3000 && !mediaPlayer.isPlaying()) {
                     mediaPlayer.start();
