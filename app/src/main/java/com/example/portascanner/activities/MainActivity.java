@@ -1,8 +1,11 @@
 package com.example.portascanner.activities;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.widget.ViewAnimator;
 
@@ -17,6 +20,7 @@ import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 
+import com.example.portascanner.HeatmapPainter;
 import com.example.portascanner.R;
 import com.example.portascanner.scans.ScanCreator;
 import com.example.portascanner.scans.ScanData;
@@ -24,7 +28,12 @@ import com.example.portascanner.scans.ScanRepository;
 import com.example.portascanner.objectdetection.ResultView;
 import com.google.common.util.concurrent.ListenableFuture;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 
 public class MainActivity extends AppCompatActivity {
@@ -81,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialise buttons
         this.requireViewById(R.id.new_scan_btn).setOnClickListener(v -> this.startScan());
-        this.requireViewById(R.id.view_scans_btn).setOnClickListener(v -> this.startActivity(new Intent(this, ViewScansActivity.class)));
+        this.requireViewById(R.id.view_scans_btn).setOnClickListener(v -> this.startActivity(new Intent(this, ScanGalleryActivity.class)));
         this.requireViewById(R.id.stop_scan_btn).setOnClickListener(v -> this.stopScan());
         this.requireViewById(R.id.about_btn).setOnClickListener(v -> new AlertDialog.Builder(this)
                 .setTitle("Switch to test model")

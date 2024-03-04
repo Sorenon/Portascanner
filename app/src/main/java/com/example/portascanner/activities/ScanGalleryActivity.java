@@ -21,7 +21,7 @@ import com.example.portascanner.scans.ScanRepository;
 
 import java.util.Map;
 
-public class ViewScansActivity extends AppCompatActivity {
+public class ScanGalleryActivity extends AppCompatActivity {
 
     private static final ScanRepository SCAN_REPOSITORY = ScanRepository.INSTANCE;
     private ScanRepository.Listener listener;
@@ -84,7 +84,7 @@ public class ViewScansActivity extends AppCompatActivity {
             layout.addView(timestampView);
 
             cardView.setOnClickListener(v -> {
-                Intent intent = new Intent(this, ViewScanActivity.class);
+                Intent intent = new Intent(this, ScanDetailsActivity.class);
                 intent.putExtra("com.example.portascanner.scan_name", name);
                 this.startActivity(intent);
             });

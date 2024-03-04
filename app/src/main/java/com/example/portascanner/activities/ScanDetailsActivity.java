@@ -15,6 +15,7 @@ import android.widget.ImageView;
 import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 
+import com.example.portascanner.HeatmapPainter;
 import com.example.portascanner.R;
 import com.example.portascanner.scans.Scan;
 import com.example.portascanner.scans.ScanRepository;
@@ -22,8 +23,10 @@ import com.example.portascanner.scans.ScanRepository;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Arrays;
 
-public class ViewScanActivity extends Activity {
+public class ScanDetailsActivity extends Activity {
     // TODO, heatmap, zoom
 
     private static final ScanRepository SCAN_REPOSITORY = ScanRepository.INSTANCE;
@@ -38,7 +41,7 @@ public class ViewScanActivity extends Activity {
 
         Scan scan = SCAN_REPOSITORY.getScans().get(scanName);
 
-        this.imgPreview = scan.scanData.image.copy(Bitmap.Config.RGB_565, true);
+        this.imgPreview = scan.scanData.image.copy(Bitmap.Config.ARGB_8888, true);
 
         Paint mPaintRectangle = new Paint();
         mPaintRectangle.setColor(Color.RED);
@@ -53,7 +56,15 @@ public class ViewScanActivity extends Activity {
         ImageView imageView = this.requireViewById(R.id.scan_img1);
         ImageView imageView2 = this.requireViewById(R.id.scan_img2);
 
-        imageView.setImageBitmap(scan.scanData.image);
+        HeatmapPainter heatmapPainter = new HeatmapPainter();
+        Bitmap bitmap = heatmapPainter.paint(imgPreview.getWidth(), imgPreview.getHeight(), scan.scanData.points);
+        Bitmap bitmap1 = scan.scanData.image.copy(Bitmap.Config.ARGB_8888, true);
+        Canvas canvas1 = new Canvas(bitmap1);
+        Paint paint = new Paint();
+        paint.setStyle(Paint.Style.FILL);
+        canvas1.drawBitmap(bitmap, 0, 0, paint);
+
+        imageView.setImageBitmap(bitmap1);
         imageView2.setImageBitmap(imgPreview);
 
         this.requireViewById(R.id.close_btn).setOnClickListener(v -> this.finish());

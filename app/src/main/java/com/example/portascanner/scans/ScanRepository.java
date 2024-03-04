@@ -54,7 +54,7 @@ public class ScanRepository {
         try {
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(scanFile.toPath()))) {
                 zipOutputStream.putNextEntry(new ZipEntry("image.png"));
-                scan.scanData.image.compress(Bitmap.CompressFormat.JPEG, 80, zipOutputStream);
+                scan.scanData.image.compress(Bitmap.CompressFormat.PNG, 100, zipOutputStream);
 
                 zipOutputStream.putNextEntry(new ZipEntry("data.json"));
                 try (JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(zipOutputStream))) {

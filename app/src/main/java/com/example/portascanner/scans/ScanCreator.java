@@ -18,6 +18,7 @@ import com.example.portascanner.objectdetection.TestModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -28,13 +29,13 @@ public class ScanCreator {
     private final MainActivity mainActivity;
     private final ResultView resultView;
     private final ImageAnalysis imageAnalysis;
-
+    private final List<Long> queuedSensorReadings;
+    private final List<Point> sensorPositions;
 
     private MediaPlayer mediaPlayer;
     private ScanData partialScan;
     private long lastSeenTime = 0;
     private Analyzer activeAnalyzer;
-
 
     public ScanCreator(MainActivity mainActivity, ResultView resultView, ImageAnalysis imageAnalysis) {
         this.mainActivity = mainActivity;
@@ -42,6 +43,24 @@ public class ScanCreator {
         this.imageAnalysis = imageAnalysis;
         this.executor = Executors.newSingleThreadExecutor();
         this.executor.execute(() -> this.objectDetectionModel = new ObjectDetectionModel(this.mainActivity));
+        this.queuedSensorReadings = new ArrayList<>();
+        this.sensorPositions = new ArrayList<>();
+
+        Random random = new Random();
+        new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(Math.max((long) (1000 + random.nextGaussian() * 500), 0));
+                } catch (InterruptedException ignored) {
+                }
+                long readingTime = System.currentTimeMillis();
+                this.mainActivity.runOnUiThread(() -> {
+                    if (this.activeAnalyzer != null) {
+                        this.queuedSensorReadings.add(readingTime);
+                    }
+                });
+            }
+        }).start();
     }
 
     private void handleFirstFrame(Bitmap bitmap) {
@@ -61,13 +80,14 @@ public class ScanCreator {
             if (lostSensor && !mediaPlayer.isPlaying()) {
                 mediaPlayer.start();
             }
+            return;
         } else {
             mediaPlayer.pause();
             mediaPlayer.seekTo(0);
 
             Point selectedResult = new Point();
-            if (!lostSensor && results.size() > 1 && !partialScan.points.isEmpty()) {
-                Point lastPoint = partialScan.points.get(partialScan.points.size() - 1);
+            if (!lostSensor && results.size() > 1 && !this.sensorPositions.isEmpty()) {
+                Point lastPoint = this.sensorPositions.get(this.sensorPositions.size() - 1);
 
                 int bestDistanceSqr = Integer.MAX_VALUE;
                 for (Result result : results) {
@@ -97,7 +117,13 @@ public class ScanCreator {
             }
 
             lastSeenTime = currentTime;
-            partialScan.points.add(selectedResult);
+            this.sensorPositions.add(selectedResult);
+
+            //TODO interpolation + handling loosing sensor tracking
+            for (long readingTime : this.queuedSensorReadings) {
+                this.partialScan.points.add(selectedResult);
+            }
+            this.queuedSensorReadings.clear();
         }
 
         resultView.setResults(results, partialScan.points);
@@ -118,6 +144,8 @@ public class ScanCreator {
         this.mediaPlayer = null;
         this.resultView.setResults(new ArrayList<>(), new ArrayList<>());
         this.resultView.invalidate();
+        this.sensorPositions.clear();
+        this.queuedSensorReadings.clear();
         return this.partialScan;
     }
 
