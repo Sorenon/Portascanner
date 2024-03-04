@@ -1,6 +1,5 @@
 package com.example.portascanner.activities;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -11,10 +10,9 @@ import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.ImageView;
-import android.widget.Switch;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.FileProvider;
 
@@ -28,7 +26,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-public class ScanDetailsActivity extends Activity {
+public class ScanDetailsActivity extends AppCompatActivity {
     private static final ScanRepository SCAN_REPOSITORY = ScanRepository.INSTANCE;
     private static final HeatmapPainter heatmapPainter = new HeatmapPainter();
 
@@ -54,7 +52,7 @@ public class ScanDetailsActivity extends Activity {
 
         Bitmap scanImage = scan.scanData.image;
         this.heatmap = heatmapPainter.paint(scanImage.getWidth(), scanImage.getHeight(), scan.scanData.points);
-        this.imageView = this.requireViewById(R.id.scan_img1);
+        this.imageView = this.requireViewById(R.id.scan_img);
 
         this.marker_sw = this.requireViewById(R.id.marker_sw);
         this.heatmap_sw = this.requireViewById(R.id.heatmap_sw);
