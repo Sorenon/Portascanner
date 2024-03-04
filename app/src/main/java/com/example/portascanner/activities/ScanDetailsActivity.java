@@ -1,6 +1,7 @@
 package com.example.portascanner.activities;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
@@ -11,26 +12,32 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.Switch;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.content.FileProvider;
 
 import com.example.portascanner.HeatmapPainter;
 import com.example.portascanner.R;
 import com.example.portascanner.scans.Scan;
 import com.example.portascanner.scans.ScanRepository;
+import com.ortiz.touchview.TouchImageView;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.util.Arrays;
 
 public class ScanDetailsActivity extends Activity {
-    // TODO, heatmap, zoom
-
     private static final ScanRepository SCAN_REPOSITORY = ScanRepository.INSTANCE;
-    private Bitmap imgPreview;
+    private static final HeatmapPainter heatmapPainter = new HeatmapPainter();
+
+    private Bitmap heatmap;
+    private Bitmap currentPreview;
+    private SwitchCompat marker_sw;
+    private SwitchCompat heatmap_sw;
+    private TouchImageView imageView;
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,52 +47,78 @@ public class ScanDetailsActivity extends Activity {
         String scanName = this.getIntent().getStringExtra("com.example.portascanner.scan_name");
 
         Scan scan = SCAN_REPOSITORY.getScans().get(scanName);
-
-        this.imgPreview = scan.scanData.image.copy(Bitmap.Config.ARGB_8888, true);
-
-        Paint mPaintRectangle = new Paint();
-        mPaintRectangle.setColor(Color.RED);
-        mPaintRectangle.setStrokeWidth(5);
-        mPaintRectangle.setStyle(Paint.Style.STROKE);
-
-        Canvas canvas = new Canvas(imgPreview);
-        for (Point point : scan.scanData.points) {
-            canvas.drawCircle(point.x, point.y, 10, mPaintRectangle);
+        if (scan == null) {
+            this.finish();
+            return;
         }
 
-        ImageView imageView = this.requireViewById(R.id.scan_img1);
-        ImageView imageView2 = this.requireViewById(R.id.scan_img2);
+        Bitmap scanImage = scan.scanData.image;
+        this.heatmap = heatmapPainter.paint(scanImage.getWidth(), scanImage.getHeight(), scan.scanData.points);
+        this.imageView = this.requireViewById(R.id.scan_img1);
 
-        HeatmapPainter heatmapPainter = new HeatmapPainter();
-        Bitmap bitmap = heatmapPainter.paint(imgPreview.getWidth(), imgPreview.getHeight(), scan.scanData.points);
-        Bitmap bitmap1 = scan.scanData.image.copy(Bitmap.Config.ARGB_8888, true);
-        Canvas canvas1 = new Canvas(bitmap1);
-        Paint paint = new Paint();
-        paint.setStyle(Paint.Style.FILL);
-        canvas1.drawBitmap(bitmap, 0, 0, paint);
-
-        imageView.setImageBitmap(bitmap1);
-        imageView2.setImageBitmap(imgPreview);
-
-        this.requireViewById(R.id.close_btn).setOnClickListener(v -> this.finish());
-        this.requireViewById(R.id.delete_btn).setOnClickListener(v -> {
-            SCAN_REPOSITORY.delete(scanName);
-            this.finish();
+        this.marker_sw = this.requireViewById(R.id.marker_sw);
+        this.heatmap_sw = this.requireViewById(R.id.heatmap_sw);
+        this.marker_sw.setChecked(true);
+        this.heatmap_sw.setChecked(true);
+        this.marker_sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            this.refreshImage(scan);
         });
+        this.heatmap_sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            this.refreshImage(scan);
+        });
+
+        this.refreshImage(scan);
+        this.requireViewById(R.id.close_btn).setOnClickListener(v -> this.finish());
+        this.requireViewById(R.id.delete_btn).setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setTitle("Delete Scan")
+                .setPositiveButton(android.R.string.yes, (dialog, which) -> {
+                    SCAN_REPOSITORY.delete(scanName);
+                    this.finish();
+                })
+                .setNegativeButton(android.R.string.no, null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show());
         this.requireViewById(R.id.export_btn).setOnClickListener(v -> {
             Intent shareIntent = new Intent();
             shareIntent.setAction(Intent.ACTION_SEND);
-            shareIntent.putExtra(Intent.EXTRA_STREAM, saveImage(this.imgPreview));
+            shareIntent.putExtra(Intent.EXTRA_STREAM, saveImage(this.currentPreview));
             shareIntent.setType("image/jpg");
             shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(shareIntent, null));
         });
     }
 
+    private void refreshImage(Scan scan) {
+        this.currentPreview = scan.scanData.image.copy(Bitmap.Config.ARGB_8888, true);
+        Canvas canvas = new Canvas(this.currentPreview);
+
+        if (heatmap_sw.isChecked()) {
+            Paint paint = new Paint();
+            paint.setStyle(Paint.Style.FILL);
+            canvas.drawBitmap(this.heatmap, 0, 0, paint);
+        }
+        if (marker_sw.isChecked()) {
+            Paint mPaintRectangle = new Paint();
+            mPaintRectangle.setColor(Color.RED);
+            mPaintRectangle.setStrokeWidth(3);
+            mPaintRectangle.setStyle(Paint.Style.STROKE);
+
+            for (Point point : scan.scanData.points) {
+                canvas.drawLines(new float[]{
+                        point.x, point.y - 10, point.x, point.y + 10,
+                        point.x - 10, point.y, point.x + 10, point.y
+                }, mPaintRectangle);
+            }
+        }
+
+        imageView.setImageBitmap(this.currentPreview);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        this.imgPreview.recycle();
+        this.currentPreview.recycle();
+        this.heatmap.recycle();
     }
 
     /**
