@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="brand_button" parent="TextAppearance.AppCompat">
+    <style name="BrandButton" parent="TextAppearance.AppCompat">
         <item name="android:textColor">@color/white</item>
         <item name="android:backgroundTint">@color/brand</item>
         <item name="android:fontFamily">@font/inter</item>

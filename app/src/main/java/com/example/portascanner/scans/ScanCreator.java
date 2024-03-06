@@ -34,7 +34,7 @@ public class ScanCreator {
 
     private MediaPlayer mediaPlayer;
     private ScanData partialScan;
-    private long lastSeenTime = 0;
+    private long lastSeenTime;
     private Analyzer activeAnalyzer;
 
     public ScanCreator(MainActivity mainActivity, ResultView resultView, ImageAnalysis imageAnalysis) {
@@ -73,17 +73,16 @@ public class ScanCreator {
     }
 
     private void handleResults(List<Result> results) {
-        long currentTime = System.currentTimeMillis();
-        boolean lostSensor = currentTime - lastSeenTime > 3000;
+        long now = System.currentTimeMillis();
+        boolean lostSensor = now - this.lastSeenTime > 3000;
 
         if (results.isEmpty()) {
-            if (lostSensor && !mediaPlayer.isPlaying()) {
-                mediaPlayer.start();
+            if (lostSensor) {
+                this.mediaPlayer.start();
             }
-            return;
         } else {
-            mediaPlayer.pause();
-            mediaPlayer.seekTo(0);
+            this.mediaPlayer.pause();
+            this.mediaPlayer.seekTo(0);
 
             Point selectedResult = new Point();
             if (!lostSensor && results.size() > 1 && !this.sensorPositions.isEmpty()) {
@@ -116,18 +115,27 @@ public class ScanCreator {
                 selectedResult.y = mostConfident.rect.centerY();
             }
 
-            lastSeenTime = currentTime;
+            if (!this.sensorPositions.isEmpty() && now - this.lastSeenTime < 1000) {
+                //TODO interpolation + handling loosing sensor tracking
+                for (long readingTime : this.queuedSensorReadings) {
+                    this.partialScan.points.add(selectedResult);
+                }
+            } else {
+                //TODO interpolation + handling loosing sensor tracking
+                for (long readingTime : this.queuedSensorReadings) {
+                    this.partialScan.points.add(selectedResult);
+                }
+            }
+
+
+            this.lastSeenTime = now;
             this.sensorPositions.add(selectedResult);
 
-            //TODO interpolation + handling loosing sensor tracking
-            for (long readingTime : this.queuedSensorReadings) {
-                this.partialScan.points.add(selectedResult);
-            }
             this.queuedSensorReadings.clear();
         }
 
-        resultView.setResults(results, partialScan.points);
-        resultView.invalidate();
+        this.resultView.setResults(results, partialScan.points);
+        this.resultView.invalidate();
     }
 
     public void startScan() {

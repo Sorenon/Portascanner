@@ -10,6 +10,8 @@ import android.graphics.Point;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -56,8 +58,6 @@ public class ScanDetailsActivity extends AppCompatActivity {
 
         this.marker_sw = this.requireViewById(R.id.marker_sw);
         this.heatmap_sw = this.requireViewById(R.id.heatmap_sw);
-        this.marker_sw.setChecked(true);
-        this.heatmap_sw.setChecked(true);
         this.marker_sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
             this.refreshImage(scan);
         });
@@ -84,6 +84,14 @@ public class ScanDetailsActivity extends AppCompatActivity {
             shareIntent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(shareIntent, null));
         });
+        this.<TextView>requireViewById(R.id.title_txt).setText(scan.title);
+        this.<TextView>requireViewById(R.id.timestamp_txt).setText(Scan.getPrettyFormattedTimestamp(scan.unixTimestamp));
+        TextView descView = this.requireViewById(R.id.desc_txt);
+        if (scan.desc.isEmpty()) {
+            descView.setVisibility(View.GONE);
+        } else {
+            descView.setText(scan.desc);
+        }
     }
 
     private void refreshImage(Scan scan) {

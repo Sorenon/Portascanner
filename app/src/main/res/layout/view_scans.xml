@@ -27,7 +27,7 @@
 
     <Button
         android:id="@+id/back_btn"
-        style="@style/brand_button"
+        style="@style/BrandButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
@@ -57,7 +57,7 @@
 
     <Button
         android:id="@+id/delete_btn"
-        style="@style/brand_button"
+        style="@style/BrandButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
@@ -69,7 +69,7 @@
 
     <Button
         android:id="@+id/export_btn"
-        style="@style/brand_button"
+        style="@style/BrandButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"

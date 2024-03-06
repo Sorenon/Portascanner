@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.view.WindowManager;
 import android.widget.ViewAnimator;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private ListenableFuture<ProcessCameraProvider> cameraProviderFuture;
     public Preview preview;
     public ScanCreator scanCreator;
+    private boolean scanning = false;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -107,9 +109,16 @@ public class MainActivity extends AppCompatActivity {
         this.<ViewAnimator>requireViewById(R.id.menu_animator).setDisplayedChild(1);
 
         this.scanCreator.startScan();
+        this.scanning = true;
+        this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     void stopScan() {
+        if (!this.scanning) {
+            return;
+        }
+        this.scanning = false;
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         this.<ViewAnimator>requireViewById(R.id.menu_animator).setDisplayedChild(0);
 
         ScanData scan = this.scanCreator.stopScan();
@@ -120,19 +129,26 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+//    @Override
+//    protected void onResume() {
+//        super.onResume();
+//        ResultView resultView = this.findViewById(R.id.results_view);
+//        if (resultView != null) {
+//            resultView.setResults(new ArrayList<>(), new ArrayList<>());
+//            resultView.invalidate();
+//        }
+//    }
+
     @Override
-    protected void onResume() {
-        super.onResume();
-        ResultView resultView = this.findViewById(R.id.results_view);
-        if (resultView != null) {
-            resultView.setResults(new ArrayList<>(), new ArrayList<>());
-            resultView.invalidate();
-        }
+    protected void onPause() {
+        super.onPause();
+        this.stopScan();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        this.stopScan();
         this.scanCreator.destroy();
     }
 }

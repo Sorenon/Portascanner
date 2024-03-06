@@ -75,7 +75,7 @@ public class ScanGalleryActivity extends AppCompatActivity {
             titleView.setText(scan.title);
 
             TextView timestampView = new TextView(this);
-            timestampView.setText(Scan.getFormattedTimestamp(scan.unixTimestamp));
+            timestampView.setText(Scan.getPrettyFormattedTimestamp(scan.unixTimestamp));
             timestampView.setTextColor(ContextCompat.getColor(this.getBaseContext(), R.color.grey));
 
             cardView.addView(layout);
