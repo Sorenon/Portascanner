@@ -5,6 +5,7 @@ import static android.util.TypedValue.COMPLEX_UNIT_DIP;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.TypedValue;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -13,6 +14,9 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
+import androidx.constraintlayout.helper.widget.Flow;
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 
 import com.example.portascanner.R;
@@ -44,53 +48,59 @@ public class ScanGalleryActivity extends AppCompatActivity {
     }
 
     private void reload() {
-        this.setContentView(R.layout.view_scans);
-
+        this.setContentView(R.layout.scan_gallery);
         this.requireViewById(R.id.back_btn).setOnClickListener(v -> this.finish());
+        ConstraintLayout grid = this.requireViewById(R.id.grid);
+        Flow flow = this.requireViewById(R.id.flow);
 
-        LinearLayout grid = this.requireViewById(R.id.grid);
         for (Map.Entry<String, Scan> entry : SCAN_REPOSITORY.getScans().entrySet()) {
-            String name = entry.getKey();
-            Scan scan = entry.getValue();
-
-            CardView cardView = new CardView(this);
-            ViewGroup.MarginLayoutParams params1 = new LinearLayout.LayoutParams(
-                    (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 150, this.getResources().getDisplayMetrics()),
-                    LinearLayout.LayoutParams.WRAP_CONTENT);
-            params1.setMargins(5, 5, 5, 5);
-
-            cardView.setLayoutParams(params1);
-
-            LinearLayout layout = new LinearLayout(this);
-            layout.setOrientation(LinearLayout.VERTICAL);
-
-            ImageView imageView = new ImageView(this);
-            imageView.setLayoutParams(new LinearLayout.LayoutParams(
-                    (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 150, this.getResources().getDisplayMetrics()),
-                    (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, 150, this.getResources().getDisplayMetrics())
-            ));
-            imageView.setImageBitmap(scan.scanData.image);
-
-            TextView titleView = new TextView(this);
-            titleView.setText(scan.title);
-
-            TextView timestampView = new TextView(this);
-            timestampView.setText(Scan.getPrettyFormattedTimestamp(scan.unixTimestamp));
-            timestampView.setTextColor(ContextCompat.getColor(this.getBaseContext(), R.color.grey));
-
-            cardView.addView(layout);
-            layout.addView(imageView);
-            layout.addView(titleView);
-            layout.addView(timestampView);
-
-            cardView.setOnClickListener(v -> {
-                Intent intent = new Intent(this, ScanDetailsActivity.class);
-                intent.putExtra("com.example.portascanner.scan_name", name);
-                this.startActivity(intent);
-            });
-
+            CardView cardView = makeCard(entry.getKey(), entry.getValue());
+            cardView.setId(View.generateViewId());
             grid.addView(cardView);
+            flow.addView(cardView);
         }
+    }
+
+    private CardView makeCard(String scanID, Scan scan) {
+        float width = 200;
+
+        CardView cardView = new CardView(this);
+        ViewGroup.MarginLayoutParams cardLayoutParams = new LinearLayout.LayoutParams(
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, width, this.getResources().getDisplayMetrics()),
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        cardLayoutParams.setMargins(5, 5, 5, 5);
+        cardView.setLayoutParams(cardLayoutParams);
+
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+
+        ImageView imageView = new ImageView(this);
+        imageView.setLayoutParams(new LinearLayout.LayoutParams(
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, width, this.getResources().getDisplayMetrics()),
+                (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, width * 3 / 4, this.getResources().getDisplayMetrics())
+        ));
+        imageView.setImageBitmap(scan.scanData.image);
+
+        TextView titleView = new TextView(this);
+        titleView.setText(scan.title);
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+
+        TextView timestampView = new TextView(this);
+        timestampView.setText(Scan.getPrettyFormattedTimestamp(scan.unixTimestamp));
+        timestampView.setTextColor(ContextCompat.getColor(this.getBaseContext(), R.color.grey));
+        timestampView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+
+        cardView.addView(layout);
+        layout.addView(imageView);
+        layout.addView(titleView);
+        layout.addView(timestampView);
+
+        cardView.setOnClickListener(v -> {
+            Intent intent = new Intent(this, ScanDetailsActivity.class);
+            intent.putExtra("com.example.portascanner.scan_name", scanID);
+            this.startActivity(intent);
+        });
+        return cardView;
     }
 
     @Override
