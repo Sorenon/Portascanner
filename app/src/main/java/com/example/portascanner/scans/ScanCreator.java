@@ -34,7 +34,7 @@ public class ScanCreator {
 
     private MediaPlayer mediaPlayer;
     private ScanData partialScan;
-    private long lastSeenTime;
+    private long lastResultTime;
     private Analyzer activeAnalyzer;
 
     public ScanCreator(MainActivity mainActivity, ResultView resultView, ImageAnalysis imageAnalysis) {
@@ -69,23 +69,37 @@ public class ScanCreator {
         this.partialScan.image = bitmap;
         this.resultView.scaleX = (float) this.resultView.getHeight() / bitmap.getHeight();
         this.resultView.scaleY = (float) this.resultView.getWidth() / bitmap.getWidth();
-        this.lastSeenTime = System.currentTimeMillis();
+        this.lastResultTime = System.currentTimeMillis();
     }
 
     private void handleResults(List<Result> results) {
         long now = System.currentTimeMillis();
-        boolean lostSensor = now - this.lastSeenTime > 3000;
 
         if (results.isEmpty()) {
-            if (lostSensor) {
+            // If its been >3s since the last result, play a sound to alert the user
+            if (now - this.lastResultTime > 3000) {
                 this.mediaPlayer.start();
+            }
+
+            // If its been >500ms since the last result, start dropping results or use the position of the last result
+            if (now - lastResultTime > 500) {
+                this.queuedSensorReadings.removeIf(readingTime -> {
+                    // If the reading was <500ms after the last result, use the last result
+                    if (!this.sensorPositions.isEmpty() && readingTime - lastResultTime < 500) {
+                        Point lastPosition = this.sensorPositions.get(this.sensorPositions.size() - 1);
+                        this.partialScan.points.add(lastPosition);
+                        return true;
+                    }
+                    // Drop the reading if it's >500ms old, otherwise wait for a new result
+                    return now - readingTime > 500;
+                });
             }
         } else {
             this.mediaPlayer.pause();
             this.mediaPlayer.seekTo(0);
 
             Point selectedResult = new Point();
-            if (!lostSensor && results.size() > 1 && !this.sensorPositions.isEmpty()) {
+            if (now - lastResultTime < 1000 && results.size() > 1 && !this.sensorPositions.isEmpty()) {
                 Point lastPoint = this.sensorPositions.get(this.sensorPositions.size() - 1);
 
                 int bestDistanceSqr = Integer.MAX_VALUE;
@@ -115,20 +129,34 @@ public class ScanCreator {
                 selectedResult.y = mostConfident.rect.centerY();
             }
 
-            if (!this.sensorPositions.isEmpty() && now - this.lastSeenTime < 1000) {
-                //TODO interpolation + handling loosing sensor tracking
+            // If it's been <500ms since the last result, interpolate between the two positions
+            if (!this.sensorPositions.isEmpty() && now - this.lastResultTime < 500) {
+                Point lastPosition = this.sensorPositions.get(this.sensorPositions.size() - 1);
+
                 for (long readingTime : this.queuedSensorReadings) {
-                    this.partialScan.points.add(selectedResult);
+                    if (readingTime < this.lastResultTime) {
+                        this.partialScan.points.add(lastPosition);
+                        continue;
+                    }
+
+                    // 1 = now
+                    // 0 = lastResultTime
+                    float iLerp = 1 - (float) (now - readingTime) / (float) (now - lastResultTime);
+
+                    int x = (int) (lastPosition.x * (1 - iLerp) + selectedResult.x * iLerp);
+                    int y = (int) (lastPosition.y * (1 - iLerp) + selectedResult.y * iLerp);
+                    this.partialScan.points.add(new Point(x, y));
                 }
             } else {
-                //TODO interpolation + handling loosing sensor tracking
                 for (long readingTime : this.queuedSensorReadings) {
-                    this.partialScan.points.add(selectedResult);
+                    // Only accept readings which are <500ms old
+                    if (now - readingTime < 500) {
+                        this.partialScan.points.add(selectedResult);
+                    }
                 }
             }
 
-
-            this.lastSeenTime = now;
+            this.lastResultTime = now;
             this.sensorPositions.add(selectedResult);
 
             this.queuedSensorReadings.clear();

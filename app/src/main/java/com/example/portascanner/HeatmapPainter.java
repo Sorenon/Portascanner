@@ -1,6 +1,5 @@
 package com.example.portascanner;
 
-import static android.graphics.Color.TRANSPARENT;
 import static android.graphics.Color.argb;
 import static android.graphics.Color.rgb;
 
