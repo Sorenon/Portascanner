@@ -14,13 +14,16 @@ import com.example.portascanner.activities.MainActivity;
 import com.example.portascanner.objectdetection.ObjectDetectionModel;
 import com.example.portascanner.objectdetection.Result;
 import com.example.portascanner.objectdetection.ResultView;
-import com.example.portascanner.objectdetection.TestModel;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+
+import ai.onnxruntime.OrtException;
 
 public class ScanCreator {
     private ObjectDetectionModel objectDetectionModel;
@@ -42,7 +45,13 @@ public class ScanCreator {
         this.resultView = resultView;
         this.imageAnalysis = imageAnalysis;
         this.executor = Executors.newSingleThreadExecutor();
-        this.executor.execute(() -> this.objectDetectionModel = new ObjectDetectionModel(this.mainActivity));
+        this.executor.execute(() -> {
+            try {
+                this.objectDetectionModel = new ObjectDetectionModel(this.mainActivity);
+            } catch (OrtException | IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
         this.queuedSensorReadings = new ArrayList<>();
         this.sensorPositions = new ArrayList<>();
 
@@ -95,8 +104,10 @@ public class ScanCreator {
                 });
             }
         } else {
-            this.mediaPlayer.pause();
-            this.mediaPlayer.seekTo(0);
+            if (this.mediaPlayer.isPlaying()) {
+                this.mediaPlayer.pause();
+                this.mediaPlayer.seekTo(0);
+            }
 
             Point selectedResult = new Point();
             if (now - lastResultTime < 1000 && results.size() > 1 && !this.sensorPositions.isEmpty()) {
@@ -178,7 +189,7 @@ public class ScanCreator {
         this.activeAnalyzer = null;
         this.mediaPlayer.release();
         this.mediaPlayer = null;
-        this.resultView.setResults(new ArrayList<>(), new ArrayList<>());
+        this.resultView.setResults(Collections.emptyList(), Collections.emptyList());
         this.resultView.invalidate();
         this.sensorPositions.clear();
         this.queuedSensorReadings.clear();
@@ -187,15 +198,12 @@ public class ScanCreator {
 
     public void destroy() {
         this.executor.execute(() -> {
-            this.objectDetectionModel.destroy();
+            try {
+                this.objectDetectionModel.destroy();
+            } catch (OrtException e) {
+                throw new RuntimeException(e);
+            }
             this.objectDetectionModel = null;
-        });
-    }
-
-    public void switchToTesting() {
-        this.executor.execute(() -> {
-            this.objectDetectionModel.destroy();
-            this.objectDetectionModel = new TestModel(this.mainActivity);
         });
     }
 
@@ -222,20 +230,30 @@ public class ScanCreator {
                     }
                 });
             }
+            long start = System.currentTimeMillis();
 
             Log.d("Scan", "Start analysis");
-            List<Result> results = scanCreator.objectDetectionModel.analyzeImage(bitmap);
-            Log.d("Scan", "End analysis with " + results.size() + " results");
+            try {
+                List<Result> results = scanCreator.objectDetectionModel.run(bitmap);
 
-            if (!firstFrame) {
-                bitmap.recycle();
+                Log.d("Scan", "End analysis with " + results.size() + " results");
+
+                long dur = System.currentTimeMillis() - start;
+                Log.i("TIMETAKEN", "Time Taken: " + dur + "ms");
+
+                if (!firstFrame) {
+                    bitmap.recycle();
+                }
+
+                scanCreator.mainActivity.runOnUiThread(() -> {
+                    if (scanCreator.activeAnalyzer == this) {
+                        scanCreator.handleResults(results);
+                    }
+                });
+            } catch (OrtException e) {
+                throw new RuntimeException(e);
             }
 
-            scanCreator.mainActivity.runOnUiThread(() -> {
-                if (scanCreator.activeAnalyzer == this) {
-                    scanCreator.handleResults(results);
-                }
-            });
         }
     }
 }

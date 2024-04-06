@@ -63,7 +63,6 @@ public class ResultView extends View {
             result.rect.left *= this.scaleX;
             result.rect.right *= this.scaleX;
         }
-
         this.points = points;
     }
 }
