@@ -60,13 +60,6 @@
                 android:backgroundTint="@color/brand"
                 android:text="@string/view_scans" />
 
-            <Button
-                android:id="@+id/about_btn"
-                style="@style/BrandButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:backgroundTint="@color/brand"
-                android:text="@string/about" />
         </LinearLayout>
 
         <LinearLayout
@@ -80,7 +73,7 @@
                 style="@style/BrandButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="End Scan" />
+                android:text="@string/end_scan" />
         </LinearLayout>
 
     </ViewAnimator>

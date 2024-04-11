@@ -1,6 +1,7 @@
 package com.example.portascanner.objectdetection;
 
 import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 
@@ -28,9 +29,9 @@ public class ObjectDetectionModel {
     private final FloatBuffer inputTensorBuffer;
     private final OnnxTensor inputTensor;
 
-    public ObjectDetectionModel(Activity activity) throws OrtException, IOException {
+    public ObjectDetectionModel(Context context) throws OrtException, IOException {
         OrtEnvironment env = OrtEnvironment.getEnvironment();
-        session = env.createSession(readModel(activity));
+        session = env.createSession(readModel(context));
         inputTensorBuffer = ByteBuffer.allocateDirect(3 * INPUT_WIDTH * INPUT_HEIGHT * 4).order(ByteOrder.nativeOrder()).asFloatBuffer();
         inputTensor = OnnxTensor.createTensor(env, inputTensorBuffer, new long[]{1L, 3L, (long) INPUT_HEIGHT, (long) INPUT_WIDTH});
     }
@@ -67,8 +68,8 @@ public class ObjectDetectionModel {
         }
     }
 
-    private static byte[] readModel(Activity activity) throws IOException {
-        try (InputStream inputStream = activity.getResources().openRawResource(R.raw.model)) {
+    private static byte[] readModel(Context context) throws IOException {
+        try (InputStream inputStream = context.getResources().openRawResource(R.raw.completed_model)) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             byte[] buffer = new byte[1024];
             int read;

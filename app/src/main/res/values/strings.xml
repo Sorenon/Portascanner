@@ -2,5 +2,14 @@
     <string name="app_name">Portascanner</string>
     <string name="new_scan">New Scan</string>
     <string name="view_scans">View Scans</string>
-    <string name="about">About</string>
+    <string name="end_scan">End Scan</string>
+    <string name="scan_title">Title</string>
+    <string name="scan_desc">Description</string>
+    <string name="save_scan">Save</string>
+    <string name="resume_scan">Resume</string>
+    <string name="delete_scan">Delete</string>
+    <string name="export_scan">Export</string>
+    <string name="close">Close</string>
+    <string name="view_scan_heatmap">Heatmap</string>
+    <string name="view_scan_markers">Markers</string>
 </resources>

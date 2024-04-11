@@ -68,14 +68,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="Heatmap" />
+                android:text="@string/view_scan_heatmap" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/marker_sw"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:checked="true"
-                android:text="Markers" />
+                android:text="@string/view_scan_markers" />
 
             <Button
                 android:id="@+id/delete_btn"
@@ -83,7 +83,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/brand"
-                android:text="Delete"
+                android:text="@string/delete_scan"
                 android:visibility="visible" />
 
             <Button
@@ -92,7 +92,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/brand"
-                android:text="Export"
+                android:text="@string/export_scan"
                 android:visibility="visible" />
 
             <Button
@@ -101,7 +101,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:backgroundTint="@color/brand"
-                android:text="Close"
+                android:text="@string/close"
                 android:visibility="visible" />
         </LinearLayout>
 

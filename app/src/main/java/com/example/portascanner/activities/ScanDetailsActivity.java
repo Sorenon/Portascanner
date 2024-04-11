@@ -142,7 +142,7 @@ public class ScanDetailsActivity extends AppCompatActivity {
             File file = new File(imagesFolder, "shared_image.jpg");
 
             FileOutputStream stream = new FileOutputStream(file);
-            image.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+            image.compress(Bitmap.CompressFormat.PNG, 100, stream);
             stream.flush();
             stream.close();
             uri = FileProvider.getUriForFile(this, "com.example.portascanner.fileprovider", file);

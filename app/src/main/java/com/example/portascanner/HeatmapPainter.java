@@ -21,7 +21,7 @@ public class HeatmapPainter {
     private final int[] colorPalette;
 
     public HeatmapPainter() {
-        this.colorPalette = createColorPalette();
+        this.colorPalette = this.createColorPalette();
     }
 
     private int[] createColorPalette() {
@@ -44,7 +44,6 @@ public class HeatmapPainter {
     }
 
     private void paintAlpha(Canvas canvas, List<Point> points) {
-        //TODO tweak these values
         int radius = 40;
         int alpha = 100;
         float blur = 0.5f;

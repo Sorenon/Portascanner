@@ -14,7 +14,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/scan_img"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/logo" />
+        app:srcCompat="@drawable/logo"
+        android:importantForAccessibility="no" />
 
     <ImageView
         android:id="@+id/scan_img"
@@ -45,7 +46,7 @@
                 android:id="@+id/textView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Title" />
+                android:text="@string/scan_title" />
 
             <EditText
                 android:id="@+id/title_txt"
@@ -58,7 +59,7 @@
                 android:id="@+id/textView2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Description" />
+                android:text="@string/scan_desc" />
 
             <EditText
                 android:id="@+id/desc_txt"
@@ -73,14 +74,14 @@
                 style="@style/BrandButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Save" />
+                android:text="@string/save_scan" />
 
             <Button
                 android:id="@+id/resume_scan_btn"
                 style="@style/BrandButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Resume"
+                android:text="@string/resume_scan"
                 android:visibility="gone" />
 
             <Button
@@ -88,7 +89,7 @@
                 style="@style/BrandButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Delete" />
+                android:text="@string/delete_scan" />
 
         </LinearLayout>
     </ScrollView>

@@ -20,9 +20,10 @@ import java.util.List;
 
 
 public class ResultView extends View {
-    private Paint mPaintRectangle;
+    private Paint paint;
     private List<Result> results;
     private List<Point> points;
+    private Result bestResult;
 
     public float scaleX;
     public float scaleY;
@@ -33,8 +34,8 @@ public class ResultView extends View {
 
     public ResultView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        mPaintRectangle = new Paint();
-        mPaintRectangle.setColor(Color.RED);
+        paint = new Paint();
+        paint.setColor(Color.RED);
     }
 
     @Override
@@ -44,17 +45,23 @@ public class ResultView extends View {
         if (results == null) return;
 
         for (Result result : results) {
-            mPaintRectangle.setStrokeWidth(5);
-            mPaintRectangle.setStyle(Paint.Style.STROKE);
-            canvas.drawRect(result.rect, mPaintRectangle);
+            paint.setStrokeWidth(5);
+            paint.setStyle(Paint.Style.STROKE);
+            if (result != bestResult) {
+                paint.setColor(Color.BLUE);
+            }
+            canvas.drawRect(result.rect, paint);
+            if (result != bestResult) {
+                paint.setColor(Color.RED);
+            }
         }
 
         for (Point point : points) {
-            canvas.drawCircle(point.x * this.scaleX, point.y * this.scaleY, 10, mPaintRectangle);
+            canvas.drawCircle(point.x * this.scaleX, point.y * this.scaleY, 10, paint);
         }
     }
 
-    public void setResults(List<Result> results, List<Point> points) {
+    public void setResults(List<Result> results, List<Point> points, Result bestResult) {
         this.results = results;
         for (Result result : results) {
             result.rect.top *= this.scaleY;
@@ -64,5 +71,6 @@ public class ResultView extends View {
             result.rect.right *= this.scaleX;
         }
         this.points = points;
+        this.bestResult = bestResult;
     }
 }

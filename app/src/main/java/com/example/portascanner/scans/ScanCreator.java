@@ -1,5 +1,7 @@
 package com.example.portascanner.scans;
 
+import android.app.Activity;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.media.MediaPlayer;
@@ -29,7 +31,7 @@ public class ScanCreator {
     private ObjectDetectionModel objectDetectionModel;
 
     private final Executor executor;
-    private final MainActivity mainActivity;
+    private final Activity activity;
     private final ResultView resultView;
     private final ImageAnalysis imageAnalysis;
     private final List<Long> queuedSensorReadings;
@@ -40,14 +42,14 @@ public class ScanCreator {
     private long lastResultTime;
     private Analyzer activeAnalyzer;
 
-    public ScanCreator(MainActivity mainActivity, ResultView resultView, ImageAnalysis imageAnalysis) {
-        this.mainActivity = mainActivity;
+    public ScanCreator(Activity activity, ResultView resultView, ImageAnalysis imageAnalysis) {
+        this.activity = activity;
         this.resultView = resultView;
         this.imageAnalysis = imageAnalysis;
         this.executor = Executors.newSingleThreadExecutor();
         this.executor.execute(() -> {
             try {
-                this.objectDetectionModel = new ObjectDetectionModel(this.mainActivity);
+                this.objectDetectionModel = new ObjectDetectionModel(this.activity);
             } catch (OrtException | IOException e) {
                 throw new RuntimeException(e);
             }
@@ -55,6 +57,7 @@ public class ScanCreator {
         this.queuedSensorReadings = new ArrayList<>();
         this.sensorPositions = new ArrayList<>();
 
+        // Init thing for fake points
         Random random = new Random();
         new Thread(() -> {
             while (true) {
@@ -63,7 +66,7 @@ public class ScanCreator {
                 } catch (InterruptedException ignored) {
                 }
                 long readingTime = System.currentTimeMillis();
-                this.mainActivity.runOnUiThread(() -> {
+                this.activity.runOnUiThread(() -> {
                     if (this.activeAnalyzer != null) {
                         this.queuedSensorReadings.add(readingTime);
                     }
@@ -109,36 +112,8 @@ public class ScanCreator {
                 this.mediaPlayer.seekTo(0);
             }
 
-            Point selectedResult = new Point();
-            if (now - lastResultTime < 1000 && results.size() > 1 && !this.sensorPositions.isEmpty()) {
-                Point lastPoint = this.sensorPositions.get(this.sensorPositions.size() - 1);
-
-                int bestDistanceSqr = Integer.MAX_VALUE;
-                for (Result result : results) {
-                    int resultX = result.rect.centerX();
-                    int resultY = result.rect.centerY();
-
-                    int distanceX = resultX - lastPoint.x;
-                    int distanceY = resultY - lastPoint.y;
-                    int distanceSqr = distanceX * distanceX + distanceY * distanceY;
-
-                    if (distanceSqr < bestDistanceSqr) {
-                        bestDistanceSqr = distanceSqr;
-                        selectedResult.x = resultX;
-                        selectedResult.y = resultY;
-                    }
-                }
-            } else {
-                Result mostConfident = results.get(0);
-                for (int i = 1; i < results.size(); i++) {
-                    Result result = results.get(i);
-                    if (result.score > mostConfident.score) {
-                        mostConfident = result;
-                    }
-                }
-                selectedResult.x = mostConfident.rect.centerX();
-                selectedResult.y = mostConfident.rect.centerY();
-            }
+            Result bestResult = this.findBestResult(now, results);
+            Point selectedResult = new Point(bestResult.rect.centerX(), bestResult.rect.centerY());
 
             // If it's been <500ms since the last result, interpolate between the two positions
             if (!this.sensorPositions.isEmpty() && now - this.lastResultTime < 500) {
@@ -173,13 +148,48 @@ public class ScanCreator {
             this.queuedSensorReadings.clear();
         }
 
-        this.resultView.setResults(results, partialScan.points);
+        this.resultView.setResults(results, partialScan.points, this.findBestResult(System.currentTimeMillis(), results));
         this.resultView.invalidate();
+    }
+
+    public Result findBestResult(long currentTimeMillis, List<Result> results) {
+        if (results.isEmpty()) {
+            return null;
+        }
+
+        Result bestResult = null;
+        if (currentTimeMillis - this.lastResultTime < 1000 && results.size() > 1 && !this.sensorPositions.isEmpty()) {
+            Point lastPoint = this.sensorPositions.get(this.sensorPositions.size() - 1);
+
+            int bestDistanceSqr = Integer.MAX_VALUE;
+            for (Result result : results) {
+                int resultX = result.rect.centerX();
+                int resultY = result.rect.centerY();
+
+                int distanceX = resultX - lastPoint.x;
+                int distanceY = resultY - lastPoint.y;
+                int distanceSqr = distanceX * distanceX + distanceY * distanceY;
+
+                if (distanceSqr < bestDistanceSqr) {
+                    bestDistanceSqr = distanceSqr;
+                    bestResult = result;
+                }
+            }
+        } else {
+            bestResult = results.get(0);
+            for (int i = 1; i < results.size(); i++) {
+                Result result = results.get(i);
+                if (result.score > bestResult.score) {
+                    bestResult = result;
+                }
+            }
+        }
+        return bestResult;
     }
 
     public void startScan() {
         this.activeAnalyzer = new Analyzer(this);
-        this.mediaPlayer = MediaPlayer.create(this.mainActivity, R.raw.alarm);
+        this.mediaPlayer = MediaPlayer.create(this.activity, R.raw.alarm);
         this.mediaPlayer.setLooping(true);
         this.imageAnalysis.setAnalyzer(this.executor, this.activeAnalyzer);
     }
@@ -189,7 +199,7 @@ public class ScanCreator {
         this.activeAnalyzer = null;
         this.mediaPlayer.release();
         this.mediaPlayer = null;
-        this.resultView.setResults(Collections.emptyList(), Collections.emptyList());
+        this.resultView.setResults(Collections.emptyList(), Collections.emptyList(), null);
         this.resultView.invalidate();
         this.sensorPositions.clear();
         this.queuedSensorReadings.clear();
@@ -224,7 +234,7 @@ public class ScanCreator {
             if (!started) {
                 started = true;
                 firstFrame = true;
-                scanCreator.mainActivity.runOnUiThread(() -> {
+                scanCreator.activity.runOnUiThread(() -> {
                     if (scanCreator.activeAnalyzer == this) {
                         scanCreator.handleFirstFrame(bitmap);
                     }
@@ -232,20 +242,20 @@ public class ScanCreator {
             }
             long start = System.currentTimeMillis();
 
-            Log.d("Scan", "Start analysis");
+            Log.d("Scanning", "Start analysis");
             try {
                 List<Result> results = scanCreator.objectDetectionModel.run(bitmap);
 
-                Log.d("Scan", "End analysis with " + results.size() + " results");
+                Log.d("Scanning", "End analysis with " + results.size() + " results");
 
                 long dur = System.currentTimeMillis() - start;
-                Log.i("TIMETAKEN", "Time Taken: " + dur + "ms");
+                Log.i("Analysis Time Taken", "Time Taken: " + dur + "ms");
 
                 if (!firstFrame) {
                     bitmap.recycle();
                 }
 
-                scanCreator.mainActivity.runOnUiThread(() -> {
+                scanCreator.activity.runOnUiThread(() -> {
                     if (scanCreator.activeAnalyzer == this) {
                         scanCreator.handleResults(results);
                     }
