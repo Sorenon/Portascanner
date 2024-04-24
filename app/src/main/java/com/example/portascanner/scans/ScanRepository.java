@@ -23,7 +23,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -54,7 +53,7 @@ public class ScanRepository {
         try {
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(scanFile.toPath()))) {
                 zipOutputStream.putNextEntry(new ZipEntry("image.png"));
-                scan.scanData.image.compress(Bitmap.CompressFormat.PNG, 100, zipOutputStream);
+                scan.scanResults.image.compress(Bitmap.CompressFormat.PNG, 100, zipOutputStream);
 
                 zipOutputStream.putNextEntry(new ZipEntry("data.json"));
                 try (JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(zipOutputStream))) {
@@ -63,7 +62,7 @@ public class ScanRepository {
                     jsonWriter.name("desc").value(scan.desc);
                     jsonWriter.name("time").value(scan.unixTimestamp);
                     jsonWriter.name("points").beginArray();
-                    for (Point point : scan.scanData.points) {
+                    for (Point point : scan.scanResults.points) {
                         jsonWriter.value(point.x).value(point.y);
                     }
                     jsonWriter.endArray();
@@ -86,10 +85,10 @@ public class ScanRepository {
 
     private static Scan loadScan(File file) throws IOException, JSONException {
         Scan scan = new Scan();
-        scan.scanData = new ScanData();
+        scan.scanResults = new ScanResults();
 
         try (ZipFile zipFile = new ZipFile(file)) {
-            scan.scanData.image = BitmapFactory.decodeStream(zipFile.getInputStream(new ZipEntry("image.png")));
+            scan.scanResults.image = BitmapFactory.decodeStream(zipFile.getInputStream(new ZipEntry("image.png")));
 
             BufferedReader r = new BufferedReader(new InputStreamReader(zipFile.getInputStream(new ZipEntry("data.json"))));
             StringBuilder total = new StringBuilder();
@@ -105,9 +104,9 @@ public class ScanRepository {
 
             JSONArray arr = jsonReader.getJSONArray("points");
             int numPoints = arr.length() / 2;
-            scan.scanData.points = new ArrayList<>(numPoints);
+            scan.scanResults.points = new ArrayList<>(numPoints);
             for (int i = 0; i < numPoints; i++) {
-                scan.scanData.points.add(new Point(arr.getInt(i * 2), arr.getInt(i * 2 + 1)));
+                scan.scanResults.points.add(new Point(arr.getInt(i * 2), arr.getInt(i * 2 + 1)));
             }
         }
 
@@ -117,7 +116,7 @@ public class ScanRepository {
     public void delete(String name) {
         Scan scan = this.scans.remove(name);
         if (scan != null) {
-            scan.scanData.image.recycle();
+            scan.scanResults.image.recycle();
             for (Listener listener : this.listeners) {
                 listener.onChange();
             }
@@ -155,7 +154,7 @@ public class ScanRepository {
         }
 
         for (Scan scan : this.scans.values()) {
-            scan.scanData.image.recycle();
+            scan.scanResults.image.recycle();
         }
 
         this.scans.clear();

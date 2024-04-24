@@ -1,6 +1,5 @@
 package com.example.portascanner.objectdetection;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
@@ -38,7 +37,7 @@ public class ObjectDetectionModel {
 
     public List<Result> run(Bitmap bitmap) throws OrtException {
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(bitmap, INPUT_WIDTH, INPUT_HEIGHT, true);
-        bitmapToCHW(resizedBitmap, inputTensorBuffer);
+        copyBitmapAsCHW(resizedBitmap, inputTensorBuffer);
 
         try (OrtSession.Result onnxResult = session.run(Collections.singletonMap("images", inputTensor))) {
             FloatBuffer outputs = ((OnnxTensor) onnxResult.get(0)).getFloatBuffer();
@@ -68,6 +67,10 @@ public class ObjectDetectionModel {
         }
     }
 
+    /**
+     * Loads the object detection model into memory.
+     * The model used in this project was generated using <a href="https://github.com/COMP2281/software-engineering-group-03/blob/3cc9d05be430300c9137642c4d284ce9f2a29d55/companion-tools/train_and_complete_model.py">train_and_complete_model.py</a>
+     */
     private static byte[] readModel(Context context) throws IOException {
         try (InputStream inputStream = context.getResources().openRawResource(R.raw.completed_model)) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -80,7 +83,7 @@ public class ObjectDetectionModel {
         }
     }
 
-    private static void bitmapToCHW(Bitmap bitmap, FloatBuffer outBuffer) {
+    private static void copyBitmapAsCHW(Bitmap bitmap, FloatBuffer outBuffer) {
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
         int pixelsCount = height * width;

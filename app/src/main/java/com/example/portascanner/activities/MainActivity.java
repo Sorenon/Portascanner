@@ -19,7 +19,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.portascanner.R;
 import com.example.portascanner.scans.ScanCreator;
-import com.example.portascanner.scans.ScanData;
+import com.example.portascanner.scans.ScanResults;
 import com.example.portascanner.scans.ScanRepository;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -103,7 +103,7 @@ public class MainActivity extends AppCompatActivity {
         getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         this.<ViewAnimator>requireViewById(R.id.menu_animator).setDisplayedChild(0);
 
-        ScanData scan = this.scanCreator.stopScan();
+        ScanResults scan = this.scanCreator.stopScan();
 
         if (scan != null) {
             SaveScanActivity.SCAN_TO_SAVE = scan;

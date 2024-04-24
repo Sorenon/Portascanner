@@ -16,7 +16,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.constraintlayout.helper.widget.Flow;
 import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 
 import com.example.portascanner.R;
@@ -79,14 +78,14 @@ public class ScanGalleryActivity extends AppCompatActivity {
                 (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, width, this.getResources().getDisplayMetrics()),
                 (int) TypedValue.applyDimension(COMPLEX_UNIT_DIP, width * 3 / 4, this.getResources().getDisplayMetrics())
         ));
-        imageView.setImageBitmap(scan.scanData.image);
+        imageView.setImageBitmap(scan.scanResults.image);
 
         TextView titleView = new TextView(this);
         titleView.setText(scan.title);
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
 
         TextView timestampView = new TextView(this);
-        timestampView.setText(Scan.getPrettyFormattedTimestamp(scan.unixTimestamp));
+        timestampView.setText(Scan.getLocalisedFormattedTimestamp(scan.unixTimestamp));
         timestampView.setTextColor(ContextCompat.getColor(this.getBaseContext(), R.color.grey));
         timestampView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
 

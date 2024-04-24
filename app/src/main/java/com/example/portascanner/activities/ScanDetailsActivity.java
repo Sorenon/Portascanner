@@ -52,18 +52,14 @@ public class ScanDetailsActivity extends AppCompatActivity {
             return;
         }
 
-        Bitmap scanImage = scan.scanData.image;
-        this.heatmap = heatmapPainter.paint(scanImage.getWidth(), scanImage.getHeight(), scan.scanData.points);
+        Bitmap scanImage = scan.scanResults.image;
+        this.heatmap = heatmapPainter.paint(scanImage.getWidth(), scanImage.getHeight(), scan.scanResults.points);
         this.imageView = this.requireViewById(R.id.scan_img);
 
         this.marker_sw = this.requireViewById(R.id.marker_sw);
         this.heatmap_sw = this.requireViewById(R.id.heatmap_sw);
-        this.marker_sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            this.refreshImage(scan);
-        });
-        this.heatmap_sw.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            this.refreshImage(scan);
-        });
+        this.marker_sw.setOnCheckedChangeListener((buttonView, isChecked) -> this.refreshImage(scan));
+        this.heatmap_sw.setOnCheckedChangeListener((buttonView, isChecked) -> this.refreshImage(scan));
 
         this.refreshImage(scan);
         this.requireViewById(R.id.close_btn).setOnClickListener(v -> this.finish());
@@ -85,7 +81,7 @@ public class ScanDetailsActivity extends AppCompatActivity {
             startActivity(Intent.createChooser(shareIntent, null));
         });
         this.<TextView>requireViewById(R.id.title_txt).setText(scan.title);
-        this.<TextView>requireViewById(R.id.timestamp_txt).setText(Scan.getPrettyFormattedTimestamp(scan.unixTimestamp));
+        this.<TextView>requireViewById(R.id.timestamp_txt).setText(Scan.getLocalisedFormattedTimestamp(scan.unixTimestamp));
         TextView descView = this.requireViewById(R.id.desc_txt);
         if (scan.desc.isEmpty()) {
             descView.setVisibility(View.GONE);
@@ -95,7 +91,7 @@ public class ScanDetailsActivity extends AppCompatActivity {
     }
 
     private void refreshImage(Scan scan) {
-        this.currentPreview = scan.scanData.image.copy(Bitmap.Config.ARGB_8888, true);
+        this.currentPreview = scan.scanResults.image.copy(Bitmap.Config.ARGB_8888, true);
         Canvas canvas = new Canvas(this.currentPreview);
 
         if (heatmap_sw.isChecked()) {
@@ -109,7 +105,7 @@ public class ScanDetailsActivity extends AppCompatActivity {
             mPaintRectangle.setStrokeWidth(3);
             mPaintRectangle.setStyle(Paint.Style.STROKE);
 
-            for (Point point : scan.scanData.points) {
+            for (Point point : scan.scanResults.points) {
                 canvas.drawLines(new float[]{
                         point.x, point.y - 10, point.x, point.y + 10,
                         point.x - 10, point.y, point.x + 10, point.y
@@ -134,7 +130,6 @@ public class ScanDetailsActivity extends AppCompatActivity {
      * @return Uri of the saved file or null
      */
     public Uri saveImage(Bitmap image) {
-        //TODO - Should be processed in another thread
         File imagesFolder = new File(this.getCacheDir(), "shared_images");
         Uri uri = null;
         try {

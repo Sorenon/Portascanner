@@ -14,15 +14,15 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.portascanner.R;
 import com.example.portascanner.scans.Scan;
-import com.example.portascanner.scans.ScanData;
+import com.example.portascanner.scans.ScanResults;
 import com.example.portascanner.scans.ScanRepository;
 
 import java.time.Instant;
 
 public class SaveScanActivity extends AppCompatActivity {
-    public static ScanData SCAN_TO_SAVE;
+    public static ScanResults SCAN_TO_SAVE;
 
-    private ScanData scanData;
+    private ScanResults scanResults;
     private Bitmap imgPreview;
     private long unixTimestamp;
     private EditText titleTxt;
@@ -36,9 +36,9 @@ public class SaveScanActivity extends AppCompatActivity {
             return;
         }
 
-        this.scanData = SCAN_TO_SAVE;
+        this.scanResults = SCAN_TO_SAVE;
         SCAN_TO_SAVE = null;
-        this.imgPreview = this.scanData.image.copy(Bitmap.Config.RGB_565, true);
+        this.imgPreview = this.scanResults.image.copy(Bitmap.Config.RGB_565, true);
 
         Paint mPaintRectangle = new Paint();
         mPaintRectangle.setColor(Color.RED);
@@ -46,7 +46,7 @@ public class SaveScanActivity extends AppCompatActivity {
         mPaintRectangle.setStyle(Paint.Style.STROKE);
 
         Canvas canvas = new Canvas(imgPreview);
-        for (Point point : this.scanData.points) {
+        for (Point point : this.scanResults.points) {
             canvas.drawCircle(point.x, point.y, 10, mPaintRectangle);
         }
 
@@ -74,7 +74,7 @@ public class SaveScanActivity extends AppCompatActivity {
         scan.title = title;
         scan.desc = desc;
         scan.unixTimestamp = unixTimestamp;
-        scan.scanData = this.scanData;
+        scan.scanResults = this.scanResults;
 
         ScanRepository.INSTANCE.save(scan);
 
@@ -84,7 +84,7 @@ public class SaveScanActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
-        this.scanData.image.recycle();
+        this.scanResults.image.recycle();
         this.imgPreview.recycle();
     }
 }
